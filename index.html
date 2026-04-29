@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MixaBridge - Mixamo Animation Retargeting for Godot</title>
+    <meta name="description"
+        content="MixaBridge automates Mixamo animation retargeting and library construction for Godot 4.4+. Stop manually mapping bones and importing animations one by one.">
+    <link rel="icon" href="images/icon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #111113;
+            --bg-raised: #19191d;
+            --bg-inset: #0e0e10;
+            --border: #2a2a30;
+            --border-subtle: #222228;
+            --text: #e0e0e4;
+            --text-muted: #8a8a96;
+            --text-dim: #5c5c68;
+            --accent: #d4943a;
+            --accent-dim: #a06e24;
+            --green: #5a9e6f;
+            --red: #b85c5c;
+            --orange: #c8834a;
+            --radius: 6px;
+            --max-width: 860px;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 15px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 40px 0 32px;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .badge.accent {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        nav {
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 10;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: color 0.15s;
+        }
+
+        nav a:hover {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        main {
+            padding: 40px 0 80px;
+        }
+
+        section {
+            margin-bottom: 48px;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 24px 0 10px;
+        }
+
+        p {
+            margin-bottom: 14px;
+            color: var(--text-muted);
+        }
+
+        .step {
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 26px;
+            height: 26px;
+            background: var(--accent-dim);
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 26px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .step p {
+            margin-left: 36px;
+            margin-bottom: 8px;
+        }
+
+        .step img {
+            margin-left: 36px;
+            margin-top: 8px;
+        }
+
+        .warning {
+            background: rgba(184, 92, 92, 0.08);
+            border: 1px solid rgba(184, 92, 92, 0.25);
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            margin: 8px 0 8px 36px;
+            font-size: 13px;
+            color: var(--red);
+        }
+
+        .tip {
+            background: rgba(90, 158, 111, 0.08);
+            border: 1px solid rgba(90, 158, 111, 0.25);
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            margin: 8px 0 8px 36px;
+            font-size: 13px;
+            color: var(--green);
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            display: block;
+        }
+
+        .screenshot {
+            max-width: calc(100% - 36px);
+        }
+
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            background: var(--bg-inset);
+            border: 1px solid var(--border-subtle);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            color: var(--accent);
+        }
+
+        pre {
+            background: var(--bg-inset);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+        }
+
+        .demo-gif {
+            margin: 20px 0;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .demo-gif img {
+            border: none;
+            border-radius: 0;
+            width: 100%;
+        }
+
+        .file-tree {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 2;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 24px 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+
+        footer a {
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 22px;
+            }
+
+            .header-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .step p,
+            .step img,
+            .warning,
+            .tip {
+                margin-left: 0;
+            }
+
+            .screenshot {
+                max-width: 100%;
+            }
+
+            nav ul {
+                gap: 16px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+            }
+        }
+
+        /* Guide tabs */
+        .guide-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .guide-tab {
+            padding: 10px 24px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .guide-tab:hover {
+            color: var(--text);
+        }
+
+        .guide-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .video-container video {
+            width: 100%;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="header-row">
+                <img src="images/icon.svg" alt="MixaBridge" class="header-icon">
+                <h1>MixaBridge</h1>
+            </div>
+            <p class="tagline">Mixamo animation retargeting for Godot 4.4+ — automated bone mapping, import
+                configuration, and animation library construction.</p>
+            <div class="badges">
+                <span class="badge accent">Godot 4.4+</span>
+                <span class="badge">MIT License</span>
+                <span class="badge">GDScript</span>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#what">What it does</a></li>
+                <li><a href="#prerequisites">Prerequisites</a></li>
+                <li><a href="#install">Install</a></li>
+                <li><a href="#mixamo">Mixamo prep</a></li>
+                <li><a href="#guide">Usage guide</a></li>
+                <li><a href="#structure">Structure</a></li>
+                <li><a href="#limitations">Limitations</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <section id="what">
+                <h2>What it does</h2>
+                <p>Importing Mixamo animations into Godot is tedious. You have to open Advanced Import Settings for
+                    every animation file, create a BoneMap, assign SkeletonProfileHumanoid, configure retarget settings,
+                    reimport, then manually build an AnimationLibrary and add each animation to your model's
+                    AnimationPlayer.</p>
+                <p>MixaBridge does all of that in three clicks. Select your model, link your AnimationPlayer, add your
+                    animation files, hit Process. Done.</p>
+
+                <div class="demo-gif">
+                    <img src="images/14_demo_walking.gif" alt="Walking animation applied through MixaBridge">
+                </div>
+            </section>
+
+            <section id="prerequisites">
+                <h2>Why this exists</h2>
+                <p>The manual Mixamo-to-Godot import workflow goes like this:</p>
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-title" style="color: var(--text-muted);">The manual way (what you're trying to
+                            avoid)</span>
+                    </div>
+                    <p>1. Open your model's Advanced Import Settings</p>
+                    <p>2. Find the Skeleton3D, create a BoneMap, set profile to SkeletonProfileHumanoid</p>
+                    <p>3. Map the bones manually (or auto-map and cross your fingers)</p>
+                    <p>4. Save the BoneMap as a <code>.tres</code></p>
+                    <p>5. For <strong>every single animation file</strong>: open its Advanced Import Settings, assign
+                        the BoneMap, configure retarget, save</p>
+                    <p>6. Wait for reimport</p>
+                    <p>7. Open AnimationPlayer, create a new AnimationLibrary</p>
+                    <p>8. Manually add each extracted <code>.res</code> animation</p>
+                </div>
+                <p>For 5 animations, that's annoying. For 50+, that's an entire afternoon of clicking through import
+                    dialogs. And if you change your model or re-export from Mixamo, you get to do it all over again.</p>
+                <p>MixaBridge replaces steps 1 through 8 with: select model, link AnimationPlayer, add animation files,
+                    click Process.</p>
+            </section>
+
+            <section id="prerequisites-table">
+                <h2>Prerequisites</h2>
+                <table>
+                    <tr>
+                        <th>Requirement</th>
+                        <th>Details</th>
+                    </tr>
+                    <tr>
+                        <td>Godot</td>
+                        <td>4.4 or later</td>
+                    </tr>
+                    <tr>
+                        <td>Model</td>
+                        <td>Rigged character from Mixamo (.fbx)</td>
+                    </tr>
+                    <tr>
+                        <td>Animations</td>
+                        <td>Mixamo animations exported <strong>without skin</strong> (.fbx)</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section id="install">
+                <h2>Install</h2>
+                <p><strong>From the Godot Asset Library (recommended):</strong></p>
+                <p>1. In the Godot editor, open <strong>AssetLib</strong> (top center tab)</p>
+                <p>2. Search for <strong>MixaBridge</strong></p>
+                <p>3. Click <strong>Download</strong>, then <strong>Install</strong></p>
+
+                <p style="margin-top: 16px;"><strong>Manual:</strong></p>
+                <p>Copy the <code>addons/mixabridge/</code> folder into your Godot project's <code>addons/</code>
+                    directory.</p>
+
+                <p style="margin-top: 16px;">Then enable the plugin:</p>
+                <pre><code>Project &gt; Project Settings &gt; Plugins &gt; MixaBridge &gt; Enable</code></pre>
+                <p>The <strong>MixaBridge</strong> tab appears in the bottom panel next to Output, Debugger, and
+                    Animation.</p>
+            </section>
+
+            <section id="mixamo">
+                <h2>Mixamo prep</h2>
+                <p>Before using MixaBridge, you need your model rigged and your animations downloaded from Mixamo.
+                    Here's how.</p>
+
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <span class="step-title">Upload and rig your model</span>
+                    </div>
+                    <p>Go to <a href="https://www.mixamo.com" target="_blank">mixamo.com</a>, upload your character
+                        model, and map the bones when prompted (chin, wrists, elbows, knees, groin). Select
+                        <strong>Standard Skeleton</strong> when asked for skeleton type.
+                    </p>
+                    <img src="images/01_map_bones.png" alt="Mapping bones in Mixamo" class="screenshot">
+                </div>
+
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <span class="step-title">Download your rigged model</span>
+                    </div>
+                    <p>After rigging is complete, hit the orange Download button. Don't select any animation from the
+                        left panel first — just download the model as-is with the skeleton.</p>
+                    <div class="warning">Don't pick an animation in the left tab before downloading the model. Download
+                        the clean rigged model only.</div>
+                    <img src="images/02_download_model.png" alt="Download rigged model from Mixamo" class="screenshot">
+                </div>
+
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <span class="step-title">Download animations without skin</span>
+                    </div>
+                    <p>Now pick animations from the left panel. For each one, check <strong>"In Place"</strong> if it's
+                        a looping movement animation (walk, run). Then hit Download and select <strong>"Without
+                            Skin"</strong> — this gives you the animation data only, no mesh.</p>
+                    <img src="images/02_in_place_animation.png" alt="Select In Place for animations" class="screenshot"
+                        style="margin-bottom: 12px;">
+                    <img src="images/03_download_animation.png" alt="Download animation without skin"
+                        class="screenshot">
+                </div>
+
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">4</span>
+                        <span class="step-title">Add files to your Godot project</span>
+                    </div>
+                    <p>Drop the model <code>.fbx</code> and all animation <code>.fbx</code> files into your Godot
+                        project directory (e.g., <code>res://assets/</code>). Godot will auto-import them.</p>
+                </div>
+            </section>
+
+            <section id="guide">
+                <h2>Usage guide</h2>
+
+                <div class="guide-tabs">
+                    <button class="guide-tab active" data-tab="screenshots">Step-by-step screenshots</button>
+                    <button class="guide-tab" data-tab="video">Video walkthrough</button>
+                </div>
+
+                <div class="tab-content active" id="tab-screenshots">
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">1</span>
+                            <span class="step-title">Drag your model into the scene</span>
+                        </div>
+                        <p>Drag the model <code>.fbx</code> from the FileSystem dock into your scene. Right-click it and
+                            select <strong>Make Local</strong> so its nodes are editable.</p>
+                        <img src="images/05_drag_to_scene.png" alt="Drag model to scene and make local"
+                            class="screenshot">
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">2</span>
+                            <span class="step-title">Open MixaBridge</span>
+                        </div>
+                        <p>Click the <strong>MixaBridge</strong> tab in the bottom panel.</p>
+                        <img src="images/06_mixabridge_tab.png" alt="MixaBridge tab in bottom panel" class="screenshot">
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">3</span>
+                            <span class="step-title">Select your rigged model</span>
+                        </div>
+                        <p>Click <strong>"Select Rigged Model (.fbx)"</strong> and pick your model file. MixaBridge will
+                            analyze the skeleton, auto-map all Mixamo bones to Godot's humanoid profile, configure the
+                            import settings, and reimport the model. You'll see the bone mapping results in the right
+                            panel.
+                        </p>
+                        <img src="images/07_select_model.png" alt="Select model in MixaBridge" class="screenshot">
+                        <img src="images/08_step2_complete.png" alt="Step 2 complete with bone mapping"
+                            class="screenshot" style="margin-top: 12px;">
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">4</span>
+                            <span class="step-title">Link your AnimationPlayer</span>
+                        </div>
+                        <p>In the Scene dock (left side), click your model's <strong>AnimationPlayer</strong> node to
+                            select
+                            it. Then click <strong>"Link Selected AnimationPlayer"</strong> in MixaBridge. The status
+                            turns
+                            green when linked.</p>
+                        <img src="images/09_link_player.png" alt="Link AnimationPlayer" class="screenshot">
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">5</span>
+                            <span class="step-title">Add animation files</span>
+                        </div>
+                        <p>Click <strong>"Add Animation Files (.fbx)"</strong> and select all your animation
+                            <code>.fbx</code> files. They'll appear in the file list.
+                        </p>
+                        <img src="images/10_select_animations.png" alt="Select animation files" class="screenshot">
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">6</span>
+                            <span class="step-title">Configure loops & root motion</span>
+                        </div>
+                        <p>Check the <strong>Loop</strong> box to instantly make an animation loop. Check the <strong>Remove Root</strong> box to strip the translation track from the root bone, forcing the animation to play in-place. If modifying an existing animation, these changes are saved instantly without needing to process.</p>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">7</span>
+                            <span class="step-title">Rename or remove animations</span>
+                        </div>
+                        <p><strong>Rename:</strong> Double-click any animation in the list to change its name before
+                            processing. The name you set here is the final animation name in your library.</p>
+                        <p><strong>Remove:</strong> Select an animation and click <strong>"Remove Selected"</strong> to
+                            drop
+                            it from the queue.</p>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">8</span>
+                            <span class="step-title">Pick a library and process</span>
+                        </div>
+                        <p>If your AnimationPlayer already has libraries, MixaBridge shows a dropdown to pick one — new
+                            animations get added to it. Or select <strong>"Create New Library"</strong> and type a name.
+                        </p>
+                        <p>Hit <strong>"Process All"</strong>. MixaBridge configures every animation file's import
+                            settings,
+                            reimports them with the BoneMap, extracts the animations, and attaches the library directly
+                            to
+                            your AnimationPlayer.</p>
+                        <img src="images/11_name_library.png" alt="Name library and process" class="screenshot">
+                        <div class="tip">Need to make changes after processing? Edit the animation list and click
+                            <strong>"Re-process"</strong> in the header — no need to reset everything.
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <span class="step-number">9</span>
+                            <span class="step-title">Play your animations</span>
+                        </div>
+                        <p>Click the AnimationPlayer in the Scene dock. In the Animation panel at the bottom, you'll see
+                            your library and all imported animations. Select one and hit play.</p>
+                        <img src="images/12_library_result.png" alt="Animation library with imported animations"
+                            class="screenshot" style="margin-bottom: 12px;">
+                        <img src="images/13_play_animation.png" alt="Playing animation" class="screenshot">
+                        <div class="tip">The animation library is also saved as a <code>.tres</code> file in
+                            <code>res://animations/</code> so you can reuse it across scenes.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-video">
+                    <p style="margin-bottom: 16px; color: var(--text-muted);">Full walkthrough — from dragging the model
+                        to playing animations. Under 35 seconds.</p>
+                    <div class="video-container">
+                        <video controls preload="metadata">
+                            <source src="how_to_use.mp4" type="video/mp4">
+                            Your browser doesn't support video. <a href="how_to_use.mp4">Download the video</a>.
+                        </video>
+                    </div>
+                </div>
+            </section>
+
+            <section id="structure">
+                <h2>Addon structure</h2>
+                <div class="file-tree">
+                    <pre><code>addons/mixabridge/
+  plugin.cfg              config
+  plugin.gd               entry point
+  icon.svg                addon icon
+  mixamo_bone_table.gd    Mixamo-to-Humanoid bone name map
+  bone_mapper.gd          skeleton analysis + BoneMap creation
+  import_configurator.gd  .import file manipulation + reimport
+  animation_extractor.gd  animation extraction + library building
+  mixabridge_panel.tscn   bottom panel UI layout
+  mixabridge_panel.gd     panel controller + workflow orchestration
+  generated/              auto-generated BoneMap .tres files
+  docs/                   this documentation</code></pre>
+                </div>
+            </section>
+
+            <section id="how">
+                <h2>How it works</h2>
+                <p>MixaBridge doesn't use any custom import plugins or editor hacks. It works with Godot's existing
+                    import pipeline:</p>
+                <p>1. It loads your model's <code>.fbx</code> as a PackedScene, finds the Skeleton3D node, and reads the
+                    bone names.</p>
+                <p>2. It matches each <code>mixamorig:</code>-prefixed bone to Godot's
+                    <code>SkeletonProfileHumanoid</code> names using a static lookup table (e.g.,
+                    <code>mixamorig:LeftForeArm</code> maps to <code>LeftLowerArm</code>).
+                </p>
+                <p>3. It creates a <code>BoneMap</code> resource and saves it as <code>.tres</code>.</p>
+                <p>4. It edits each file's <code>.import</code> file (which is a standard <code>ConfigFile</code>) to
+                    inject the BoneMap path and retarget settings under <code>[params]</code>.</p>
+                <p>5. It calls <code>EditorFileSystem.reimport_files()</code> to trigger Godot's import pipeline with
+                    the new settings.</p>
+                <p>6. After reimport, it loads each animation scene, extracts the Animation resources from their
+                    AnimationPlayers, and assembles them into a single AnimationLibrary attached to your target
+                    AnimationPlayer.</p>
+            </section>
+
+            <section id="limitations">
+                <h2>Limitations</h2>
+                <table>
+                    <tr>
+                        <th>Limitation</th>
+                        <th>Details</th>
+                    </tr>
+                    <tr>
+                        <td>Mixamo rigs only</td>
+                        <td>The bone name table is built for Mixamo's naming convention (<code>mixamorig:</code>
+                            prefix). Other naming schemes won't auto-map.</td>
+                    </tr>
+                    <tr>
+                        <td>Godot 4.4+</td>
+                        <td>Uses APIs that may not exist in earlier versions.</td>
+                    </tr>
+                    <tr>
+                        <td>FBX/GLB/GLTF only</td>
+                        <td>Other 3D formats aren't tested.</td>
+                    </tr>
+                    <tr>
+                        <td><code>.import</code> file editing</td>
+                        <td>MixaBridge writes to <code>.import</code> files directly. If Godot's import format changes
+                            in future versions, this may break.</td>
+                    </tr>
+                    <tr>
+                        <td>Blocking reimport</td>
+                        <td><code>reimport_files()</code> blocks the editor. Large batches (50+ animations) may freeze
+                            the editor momentarily.</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section id="license">
+                <h2>License</h2>
+                <p>MIT License. Use it however you want.</p>
+            </section>
+
+            <section id="author">
+                <h2>Author</h2>
+                <p>Built by <strong>Uzair Mughal</strong>.</p>
+                <p>
+                    <a href="https://uzair.is-a.dev">uzair.is-a.dev</a>
+                    &nbsp;&middot;&nbsp;
+                    <a href="mailto:contact@uzair.is-a.dev">contact@uzair.is-a.dev</a>
+                    &nbsp;&middot;&nbsp;
+                    <a href="https://github.com/uzairdeveloper223/mixabridge">GitHub</a>
+                </p>
+            </section>
+
+            <section id="disclaimer">
+                <h2>Disclaimer</h2>
+                <p>MixaBridge is an independent, community-built tool. It is not affiliated with, endorsed by, or
+                    sponsored by Adobe Inc. or Mixamo. "Mixamo" is a trademark of Adobe Inc. This project interacts with
+                    files exported from Mixamo but has no connection to Adobe or its services.</p>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            MixaBridge &middot; MIT License &middot; <a
+                href="https://github.com/uzairdeveloper223/mixabridge">uzairdeveloper223/mixabridge</a>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.guide-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                var target = this.getAttribute('data-tab');
+
+                document.querySelectorAll('.guide-tab').forEach(function (t) {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(function (c) {
+                    c.classList.remove('active');
+                });
+                document.getElementById('tab-' + target).classList.add('active');
+            });
+        });
+    </script>
+</body>
+
+</html>
